@@ -52,6 +52,60 @@ export const routes: Routes = [
           import('./features/portfolio/portfolio-page').then((m) => m.PortfolioPage),
       },
       {
+        path: 'portfolios/:id/order',
+        title: 'New order',
+        loadComponent: () =>
+          import('./features/orders/order-ticket-page').then((m) => m.OrderTicketPage),
+      },
+      {
+        path: 'portfolios/:id/reports',
+        title: 'Reports',
+        loadComponent: () => import('./features/reports/reports-page').then((m) => m.ReportsPage),
+      },
+      {
+        path: 'orders',
+        title: 'Orders',
+        loadComponent: () => import('./features/orders/orders-page').then((m) => m.OrdersPage),
+      },
+      {
+        path: 'proposals',
+        title: 'Proposals',
+        loadComponent: () =>
+          import('./features/proposals/proposals-page').then((m) => m.ProposalsPage),
+      },
+      {
+        path: 'proposals/new',
+        canActivate: [roleGuard('RM')],
+        title: 'New proposal',
+        loadComponent: () =>
+          import('./features/proposals/proposal-editor-page').then((m) => m.ProposalEditorPage),
+      },
+      {
+        path: 'proposals/:id/edit',
+        canActivate: [roleGuard('RM')],
+        title: 'Edit proposal',
+        loadComponent: () =>
+          import('./features/proposals/proposal-editor-page').then((m) => m.ProposalEditorPage),
+      },
+      {
+        path: 'proposals/:id',
+        title: 'Proposal',
+        loadComponent: () =>
+          import('./features/proposals/proposal-page').then((m) => m.ProposalPage),
+      },
+      {
+        path: 'messages',
+        title: 'Messages',
+        loadComponent: () =>
+          import('./features/messages/messages-page').then((m) => m.MessagesPage),
+      },
+      {
+        path: 'messages/:clientId',
+        title: 'Messages',
+        loadComponent: () =>
+          import('./features/messages/messages-page').then((m) => m.MessagesPage),
+      },
+      {
         path: 'client/home',
         canActivate: [roleGuard('CLIENT')],
         title: 'Home',

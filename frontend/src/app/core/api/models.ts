@@ -183,5 +183,211 @@ export interface RmHome {
   mifidMissingOrExpired: number;
   mifidReviewsInProgress: number;
   highCashPortfolios: number;
+  proposalsPendingOver5Days: number;
+  ordersAwaitingApproval: number;
   clientsNeedingAttention: ClientListItem[];
+}
+
+export interface AdminHome {
+  ordersAwaitingApproval: number;
+  clients: number;
+  portfolios: number;
+}
+
+// ------------------------------------------------------------------ orders
+export type Side = 'BUY' | 'SELL';
+export type LimitType = 'MARKET' | 'LIMIT' | 'STOP' | 'STOP_LIMIT';
+export type TimeInForce = 'DAY' | 'GTC' | 'GTD';
+export type OrderStatus = 'PENDING_APPROVAL' | 'PLACED' | 'FILLED' | 'CANCELLED' | 'REJECTED';
+export type CheckOutcome = 'PASS' | 'WARN' | 'FAIL';
+
+export interface Instrument {
+  id: number;
+  code: string;
+  name: string;
+  assetClass: AssetClass;
+  currency: string;
+  exchange: string | null;
+  riskClass: number;
+  complex: boolean;
+  lastPrice: number;
+  priceDate: string;
+  underlyingId: number | null;
+  optionType: 'CALL' | 'PUT' | null;
+  strike: number | null;
+  expiry: string | null;
+  contractSize: number | null;
+}
+
+export interface OrderRequest {
+  portfolioId: number;
+  instrumentId: number;
+  side: Side;
+  quantity: number;
+  limitType: LimitType;
+  limitPrice: number | null;
+  stopPrice: number | null;
+  timeInForce: TimeInForce;
+  validUntil: string | null;
+  negotiatedFee: number | null;
+}
+
+export interface PreTradeCheck {
+  code: string;
+  label: string;
+  outcome: CheckOutcome;
+  message: string | null;
+}
+
+export interface OrderPreview {
+  instrumentId: number;
+  instrumentName: string;
+  assetClass: AssetClass;
+  natureLabel: string;
+  lastPrice: number;
+  estimatedPrice: number;
+  grossAmount: number;
+  fees: number;
+  standardFees: number;
+  netAmount: number;
+  cashAvailable: number;
+  quantityHeld: number;
+  checks: PreTradeCheck[];
+  canSubmit: boolean;
+  needsApproval: boolean;
+}
+
+export interface Order {
+  id: number;
+  portfolioId: number;
+  portfolioNumber: string;
+  portfolioName: string;
+  clientId: number;
+  clientName: string;
+  instrumentId: number;
+  instrumentCode: string;
+  instrumentName: string;
+  assetClass: AssetClass;
+  side: Side;
+  natureLabel: string;
+  quantity: number;
+  limitType: LimitType;
+  limitPrice: number | null;
+  stopPrice: number | null;
+  timeInForce: TimeInForce;
+  validUntil: string | null;
+  status: OrderStatus;
+  estimatedPrice: number;
+  grossAmount: number;
+  fees: number;
+  netAmount: number;
+  executedPrice: number | null;
+  executedAt: string | null;
+  checkSummary: string | null;
+  proposalId: number | null;
+  createdBy: string;
+  createdAt: string;
+  decidedBy: string | null;
+  decidedAt: string | null;
+  decisionNote: string | null;
+}
+
+// --------------------------------------------------------------- proposals
+export type ProposalStatus =
+  'WORKING' | 'SENT_FOR_VALIDATION' | 'VALIDATED' | 'REJECTED' | 'EXECUTED';
+
+export interface ProposalSummary {
+  id: number;
+  title: string;
+  status: ProposalStatus;
+  portfolioId: number;
+  portfolioNumber: string;
+  portfolioName: string;
+  clientId: number;
+  clientName: string;
+  lineCount: number;
+  estimatedBuys: number;
+  estimatedSells: number;
+  createdBy: string;
+  createdAt: string;
+  sentAt: string | null;
+  pendingOver5Days: boolean;
+}
+
+export interface ProposalLine {
+  id: number;
+  lineNo: number;
+  instrumentId: number;
+  instrumentCode: string;
+  instrumentName: string;
+  assetClass: AssetClass;
+  side: Side;
+  quantity: number;
+  lastPrice: number;
+  estimatedAmount: number;
+  estimatedFees: number;
+  comment: string | null;
+  checks: PreTradeCheck[];
+}
+
+export interface ProposalDetail {
+  summary: ProposalSummary;
+  rationale: string | null;
+  decidedAt: string | null;
+  decidedBy: string | null;
+  rejectReason: string | null;
+  signed: boolean;
+  lines: ProposalLine[];
+  hasBlockingChecks: boolean;
+  hasWarnings: boolean;
+  orderIds: number[];
+}
+
+export interface ProposalRequest {
+  portfolioId: number;
+  title: string;
+  rationale: string;
+  lines: { instrumentId: number; side: Side; quantity: number; comment: string | null }[];
+}
+
+// ----------------------------------------------------------------- reports
+export type ReportType = 'STATEMENT' | 'VALUATION' | 'PERFORMANCE' | 'TRANSACTIONS' | 'COSTS';
+
+export interface Report {
+  id: number;
+  portfolioId: number;
+  type: ReportType;
+  title: string;
+  status: 'PENDING' | 'COMPLETED' | 'FAILED';
+  requestedBy: string;
+  requestedAt: string;
+  completedAt: string | null;
+  fileName: string | null;
+  error: string | null;
+}
+
+// ---------------------------------------------------------------- messages
+export interface ThreadSummary {
+  clientId: number;
+  clientName: string;
+  clientNumber: string;
+  lastMessage: string | null;
+  lastAt: string | null;
+  unread: number;
+}
+
+export interface Message {
+  id: number;
+  fromClient: boolean;
+  senderName: string;
+  body: string;
+  createdAt: string;
+  readAt: string | null;
+  mine: boolean;
+}
+
+export interface Thread {
+  clientId: number;
+  clientName: string;
+  messages: Message[];
 }

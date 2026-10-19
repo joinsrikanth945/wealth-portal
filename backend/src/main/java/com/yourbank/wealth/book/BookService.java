@@ -2,6 +2,7 @@ package com.yourbank.wealth.book;
 
 import com.yourbank.wealth.book.BookDtos.ClientDetail;
 import com.yourbank.wealth.book.BookDtos.ClientListItem;
+import com.yourbank.wealth.book.BookDtos.AdminHome;
 import com.yourbank.wealth.book.BookDtos.RmHome;
 import com.yourbank.wealth.client.Client;
 import com.yourbank.wealth.client.ClientAccess;
@@ -9,6 +10,9 @@ import com.yourbank.wealth.identity.CurrentUser;
 import com.yourbank.wealth.mifid.MifidDtos;
 import com.yourbank.wealth.mifid.MifidDtos.NextAction;
 import com.yourbank.wealth.mifid.MifidService;
+import com.yourbank.wealth.order.OrderEnums;
+import com.yourbank.wealth.order.OrderService;
+import com.yourbank.wealth.proposal.ProposalService;
 import com.yourbank.wealth.portfolio.PortfolioDtos.PortfolioSummary;
 import com.yourbank.wealth.portfolio.PortfolioService;
 import java.math.BigDecimal;
@@ -28,11 +32,16 @@ public class BookService {
     private final ClientAccess access;
     private final PortfolioService portfolios;
     private final MifidService mifid;
+    private final ProposalService proposals;
+    private final OrderService orders;
 
-    public BookService(ClientAccess access, PortfolioService portfolios, MifidService mifid) {
+    public BookService(ClientAccess access, PortfolioService portfolios, MifidService mifid,
+                       ProposalService proposals, OrderService orders) {
         this.access = access;
         this.portfolios = portfolios;
         this.mifid = mifid;
+        this.proposals = proposals;
+        this.orders = orders;
     }
 
     public List<ClientListItem> clients(CurrentUser user, String query) {
@@ -69,7 +78,14 @@ public class BookService {
                 .filter(i -> i.mifidNextAction() != NextAction.NONE)
                 .toList();
 
-        return new RmHome(aum, book.size(), all.size(), pending, missingOrExpired, inProgress, highCash, attention);
+        return new RmHome(aum, book.size(), all.size(), pending, missingOrExpired, inProgress, highCash,
+                (int) proposals.countPendingOver5Days(book), (int) orders.countAwaitingApproval(book), attention);
+    }
+
+    public AdminHome adminHome(CurrentUser user) {
+        List<Client> all = access.book(user);
+        int awaiting = orders.list(user, null, OrderEnums.Status.PENDING_APPROVAL).size();
+        return new AdminHome(awaiting, all.size(), portfolios.summariesFor(all).size());
     }
 
     private static int count(List<ClientListItem> items, String status) {

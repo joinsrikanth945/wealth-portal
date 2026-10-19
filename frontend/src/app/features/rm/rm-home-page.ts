@@ -52,11 +52,14 @@ import { MifidBadgeComponent } from '../../shared/status-badge';
           <span class="tile-label">Reviews in progress</span>
           <span class="tile-value">{{ h.mifidReviewsInProgress }}</span>
         </div>
-        <div class="tile">
+        <a
+          class="tile tile-link"
+          routerLink="/proposals"
+          [class.tile-warn]="h.proposalsPendingOver5Days > 0"
+        >
           <span class="tile-label">Proposals pending over 5 days</span>
-          <span class="tile-value">—</span>
-          <span class="tile-note">Arrives with proposals</span>
-        </div>
+          <span class="tile-value">{{ h.proposalsPendingOver5Days }}</span>
+        </a>
       </div>
 
       <h2 class="section-title">Portfolio monitoring</h2>
@@ -65,11 +68,14 @@ import { MifidBadgeComponent } from '../../shared/status-badge';
           <span class="tile-label">Cash ratio above 30%</span>
           <span class="tile-value">{{ h.highCashPortfolios }}</span>
         </div>
-        <div class="tile">
-          <span class="tile-label">Constraint breaches</span>
-          <span class="tile-value">—</span>
-          <span class="tile-note">Arrives with constraints</span>
-        </div>
+        <a
+          class="tile tile-link"
+          routerLink="/orders"
+          [class.tile-warn]="h.ordersAwaitingApproval > 0"
+        >
+          <span class="tile-label">Orders awaiting compliance</span>
+          <span class="tile-value">{{ h.ordersAwaitingApproval }}</span>
+        </a>
       </div>
 
       @if (h.clientsNeedingAttention.length) {

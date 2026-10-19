@@ -2,6 +2,7 @@ package com.yourbank.wealth.book;
 
 import com.yourbank.wealth.book.BookDtos.ClientDetail;
 import com.yourbank.wealth.book.BookDtos.ClientListItem;
+import com.yourbank.wealth.book.BookDtos.AdminHome;
 import com.yourbank.wealth.book.BookDtos.RmHome;
 import com.yourbank.wealth.identity.CurrentUser;
 import io.swagger.v3.oas.annotations.Operation;
@@ -28,6 +29,12 @@ public class BookController {
     @Operation(summary = "RM homepage counters: AUM, MiFID problems, high-cash portfolios")
     public RmHome home(@AuthenticationPrincipal Jwt jwt) {
         return book.home(CurrentUser.from(jwt));
+    }
+
+    @GetMapping("/api/admin/home")
+    @Operation(summary = "Admin (compliance) homepage counters")
+    public AdminHome adminHome(@AuthenticationPrincipal Jwt jwt) {
+        return book.adminHome(CurrentUser.from(jwt));
     }
 
     @GetMapping("/api/rm/clients")

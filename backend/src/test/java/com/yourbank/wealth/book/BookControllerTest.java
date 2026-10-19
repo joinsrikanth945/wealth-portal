@@ -45,7 +45,7 @@ class BookControllerTest {
 
     @Test
     void rmGetsTheHomepageCounters() throws Exception {
-        when(book.home(any())).thenReturn(new RmHome(new BigDecimal("1250000.00"), 7, 8, 1, 2, 1, 1, List.of()));
+        when(book.home(any())).thenReturn(new RmHome(new BigDecimal("1250000.00"), 7, 8, 1, 2, 1, 1, 1, 1, List.of()));
 
         mvc.perform(get("/api/rm/home").with(as("rm1", "RM")))
                 .andExpect(status().isOk())

@@ -37,6 +37,20 @@ import { PerformanceChartComponent } from '../../shared/performance-chart';
         <h1 class="display">{{ p.name }}</h1>
       </header>
 
+      <div class="actions page-actions">
+        @if (canTrade(p)) {
+          <a class="btn btn-primary" [routerLink]="['/portfolios', p.id, 'order']">New order</a>
+        }
+        @if (isRm() && p.serviceType === 'ADVISORY') {
+          <a class="btn btn-ghost" routerLink="/proposals/new" [queryParams]="{ portfolioId: p.id }"
+            >New proposal</a
+          >
+        }
+        <a class="btn btn-ghost" [routerLink]="['/portfolios', p.id, 'reports']"
+          >Reports and statements</a
+        >
+      </div>
+
       <div class="tiles">
         <div class="tile">
           <span class="tile-label">Total value</span>
@@ -98,6 +112,9 @@ import { PerformanceChartComponent } from '../../shared/performance-chart';
                 <th class="num">Market value</th>
                 <th class="num">Gain / loss</th>
                 <th class="num">Weight</th>
+                @if (canTrade(p)) {
+                  <th><span class="sr-only">Trade</span></th>
+                }
               </tr>
             </thead>
             <tbody>
@@ -127,6 +144,22 @@ import { PerformanceChartComponent } from '../../shared/performance-chart';
                     }}{{ l.unrealizedPnlPercent | number: '1.1-1' }}%
                   </td>
                   <td class="num">{{ l.weightPercent | number: '1.1-1' }}%</td>
+                  @if (canTrade(p)) {
+                    <td class="num actions-cell">
+                      <a
+                        class="btn btn-ghost btn-sm"
+                        [routerLink]="['/portfolios', p.id, 'order']"
+                        [queryParams]="{ instrumentId: l.instrumentId, side: 'BUY' }"
+                        >Buy</a
+                      >
+                      <a
+                        class="btn btn-ghost btn-sm"
+                        [routerLink]="['/portfolios', p.id, 'order']"
+                        [queryParams]="{ instrumentId: l.instrumentId, side: 'SELL' }"
+                        >Sell</a
+                      >
+                    </td>
+                  }
                 </tr>
               } @empty {
                 <tr>
@@ -156,6 +189,14 @@ export class PortfolioPage {
   );
   protected readonly serviceLabels = SERVICE_TYPE_LABELS;
   protected readonly assetLabels = ASSET_CLASS_LABELS;
+
+  /** RMs trade any non-discretionary portfolio; clients only their execution-only ones. */
+  protected canTrade(p: PortfolioDetail): boolean {
+    if (p.serviceType === 'DISCRETIONARY') {
+      return false;
+    }
+    return this.isRm() || p.serviceType === 'EXECUTION_ONLY';
+  }
 
   protected backLink(p: PortfolioDetail): unknown[] {
     return this.isRm() ? ['/rm/clients', p.clientId] : ['/client/home'];

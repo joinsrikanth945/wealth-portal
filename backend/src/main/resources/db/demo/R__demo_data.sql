@@ -6,7 +6,8 @@
 -- Prices are sample values for demonstration, not market data.
 -- ============================================================================
 
-TRUNCATE mifid_answer, mifid_profile, valuation_history, position, cash_account,
+TRUNCATE message, report_job, proposal_line, proposal, trade_order,
+         mifid_answer, mifid_profile, valuation_history, position, cash_account,
          portfolio, client, instrument RESTART IDENTITY CASCADE;
 
 -- ---------------------------------------------------------------- instruments
@@ -142,6 +143,50 @@ INSERT INTO mifid_answer (profile_id, question_id, option_id) VALUES
  (7,'goal','growth'),(7,'horizon','gt10'),(7,'income','gt250'),(7,'share','lt25'),(7,'reserve','gt6m'),
  (7,'drawdown','hold'),(7,'maxloss','l5'),(7,'exp_equities','regular'),(7,'exp_derivatives','some'),(7,'leverage_quiz','false');
 
+-- ---------------------------------------------------------------- orders
+INSERT INTO trade_order (id, portfolio_id, instrument_id, side, quantity, limit_type, limit_price, stop_price,
+                         time_in_force, valid_until, status, estimated_price, gross_amount, fees, net_amount,
+                         negotiated_fee, executed_price, executed_at, check_summary, proposal_id,
+                         created_by, created_at, decided_by, decided_at, decision_note) VALUES
+ (1, 1, 2,  'BUY',  40,  'MARKET', NULL,  NULL, 'DAY', NULL, 'FILLED', 214.10,  8564.00, 21.41,  8585.41, NULL, 214.10, '2026-07-08 10:12+02', NULL, NULL, 'rm1', '2026-07-08 10:11+02', NULL, NULL, NULL),
+ (2, 1, 15, 'BUY',  15000,'LIMIT', 97.50, NULL, 'GTC', NULL, 'FILLED', 97.40,  14610.00, 36.53, 14646.53, NULL, 97.40, '2026-08-21 14:02+02', NULL, NULL, 'rm1', '2026-08-20 09:30+02', NULL, NULL, NULL),
+ (3, 2, 1,  'BUY',  4,   'MARKET', NULL,  NULL, 'DAY', NULL, 'FILLED', 668.00,  2672.00, 15.00,  2687.00, NULL, 668.00, '2026-09-03 11:45+02', NULL, NULL, 'client1', '2026-09-03 11:45+02', NULL, NULL, NULL),
+ (4, 2, 7,  'SELL', 10,  'LIMIT', 205.00, NULL, 'GTC', NULL, 'PLACED', 191.48,  2050.00, 15.00,  2035.00, NULL, NULL, NULL, NULL, NULL, 'client1', '2026-10-14 16:20+02', NULL, NULL, NULL),
+ (5, 7, 21, 'BUY',  1,   'MARKET', NULL,  NULL, 'DAY', NULL, 'FILLED', 5240.00, 52400.00, 15.00, 52415.00, NULL, 5240.00, '2026-06-12 09:05+02', NULL, NULL, 'rm1', '2026-06-12 09:04+02', NULL, NULL, NULL),
+ (6, 7, 1,  'BUY',  40,  'MARKET', NULL,  NULL, 'DAY', NULL, 'PENDING_APPROVAL', 702.40, 28096.00, 70.24, 28166.24, NULL, NULL, NULL,
+     'Concentration: ASML Holding would be 25.3% of the portfolio (limit 20%)', NULL, 'rm1', '2026-10-16 15:40+02', NULL, NULL, NULL),
+ (7, 4, 5,  'BUY',  100, 'MARKET', NULL,  NULL, 'DAY', NULL, 'FILLED', 57.10,   5710.00, 15.00,  5725.00, NULL, 57.10, '2026-05-19 10:30+02', NULL, NULL, 'rm1', '2026-05-19 10:29+02', NULL, NULL, NULL);
+
+-- ---------------------------------------------------------------- proposals
+INSERT INTO proposal (id, portfolio_id, title, rationale, status, created_by, created_at, updated_at, sent_at,
+                      decided_at, decided_by, reject_reason, signature_png) VALUES
+ (1, 1, 'Add short-dated government bonds',
+     'Lock in current yields and lower overall volatility ahead of year end, in line with the balanced profile.',
+     'WORKING', 'rm1', '2026-10-15 09:00+02', '2026-10-15 09:20+02', NULL, NULL, NULL, NULL, NULL),
+ (2, 6, 'Invest surplus cash in global equities',
+     'About 85% of the portfolio is in cash. A phased move into diversified ETFs fits the balanced profile.',
+     'SENT_FOR_VALIDATION', 'rm1', '2026-10-08 10:00+02', '2026-10-09 11:00+02', '2026-10-09 11:00+02', NULL, NULL, NULL, NULL),
+ (3, 4, 'Increase income holdings',
+     'Shift part of the cash into an income-oriented equity fund.',
+     'EXECUTED', 'rm1', '2026-05-10 09:00+02', '2026-05-19 10:29+02', '2026-05-12 09:00+02', '2026-05-15 17:00+02', 'rm1', NULL, NULL);
+
+INSERT INTO proposal_line (proposal_id, line_no, instrument_id, side, quantity, comment) VALUES
+ (1, 1, 16, 'BUY', 20000, 'French government 2031'),
+ (1, 2, 12, 'BUY', 80,    'Euro government bond ETF'),
+ (2, 1, 10, 'BUY', 400,   'Core world equities'),
+ (2, 2, 11, 'BUY', 250,   'All-world, adds emerging markets'),
+ (2, 3, 12, 'BUY', 150,   'Government bonds for balance'),
+ (3, 1, 5,  'BUY', 100,   NULL);
+
+UPDATE trade_order SET proposal_id = 3 WHERE id = 7;
+
+-- ---------------------------------------------------------------- messages
+INSERT INTO message (client_id, from_client, sender, sender_name, body, created_at, read_at) VALUES
+ (1, FALSE, 'rm1',     'Ravi Menon',   'Hello Clara, I have prepared a proposal to add some short-dated government bonds. Shall we go through it on Thursday?', '2026-10-15 09:25+02', '2026-10-15 12:10+02'),
+ (1, TRUE,  'client1', 'Clara Dupont', 'Thursday at 11 works for me. Could you also send my September statement?', '2026-10-15 12:12+02', '2026-10-15 13:00+02'),
+ (1, FALSE, 'rm1',     'Ravi Menon',   'Perfect, Thursday at 11. You can generate the statement yourself under Reports on your portfolio page.', '2026-10-15 13:02+02', NULL),
+ (5, TRUE,  'amelie',  'Amélie Laurent', 'I received the proposal about investing my cash. Can we do it in two steps instead of one?', '2026-10-17 18:40+02', NULL);
+
 -- Let new rows created through the app continue after the demo ids.
 SELECT setval(pg_get_serial_sequence('instrument', 'id'),    (SELECT max(id) FROM instrument));
 SELECT setval(pg_get_serial_sequence('client', 'id'),        (SELECT max(id) FROM client));
@@ -149,3 +194,7 @@ SELECT setval(pg_get_serial_sequence('portfolio', 'id'),     (SELECT max(id) FRO
 SELECT setval(pg_get_serial_sequence('cash_account', 'id'),  (SELECT max(id) FROM cash_account));
 SELECT setval(pg_get_serial_sequence('position', 'id'),      (SELECT max(id) FROM position));
 SELECT setval(pg_get_serial_sequence('mifid_profile', 'id'), (SELECT max(id) FROM mifid_profile));
+SELECT setval(pg_get_serial_sequence('trade_order', 'id'),   (SELECT max(id) FROM trade_order));
+SELECT setval(pg_get_serial_sequence('proposal', 'id'),      (SELECT max(id) FROM proposal));
+SELECT setval(pg_get_serial_sequence('proposal_line', 'id'), (SELECT max(id) FROM proposal_line));
+SELECT setval(pg_get_serial_sequence('message', 'id'),       (SELECT max(id) FROM message));

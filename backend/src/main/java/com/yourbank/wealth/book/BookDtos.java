@@ -55,6 +55,12 @@ public final class BookDtos {
             int mifidMissingOrExpired,
             int mifidReviewsInProgress,
             int highCashPortfolios,
+            int proposalsPendingOver5Days,
+            int ordersAwaitingApproval,
             List<ClientListItem> clientsNeedingAttention) {
+    }
+
+    /** The counters on the admin (compliance) homepage. */
+    public record AdminHome(int ordersAwaitingApproval, int clients, int portfolios) {
     }
 }

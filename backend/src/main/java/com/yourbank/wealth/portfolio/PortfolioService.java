@@ -73,7 +73,11 @@ public class PortfolioService {
     }
 
     public PortfolioDetail detail(Long portfolioId, CurrentUser user) {
-        Portfolio p = requireVisible(portfolioId, user);
+        return detailOf(requireVisible(portfolioId, user));
+    }
+
+    /** Full detail without an access check: for background jobs that already checked access. */
+    public PortfolioDetail detailOf(Portfolio p) {
         Valuation v = value(p);
         List<HistoryPoint> history = history(p.getId());
         Client c = p.getClient();

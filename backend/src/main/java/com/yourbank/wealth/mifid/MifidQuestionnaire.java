@@ -8,8 +8,7 @@ import org.springframework.stereotype.Component;
 /**
  * The suitability questionnaire (version 2026.1) and its scoring.
  *
- * <p>
- * Objectives, financial situation and attitude-to-risk answers are scored
+ * <p>Objectives, financial situation and attitude-to-risk answers are scored
  * 1-4 points each; the total (7-28) gives the risk profile 1-5. The knowledge
  * section decides whether complex products (derivatives) are appropriate.
  * In phase 8 the admin questionnaire editor will store versions in the
@@ -129,7 +128,6 @@ public class MifidQuestionnaire {
         }
 
         Integer riskScore = allScoredAnswered ? riskScoreFor(points) : null;
-
         String derivatives = answers.get("exp_derivatives"); // may be null while unanswered
         boolean derivativesExperience = "some".equals(derivatives) || "regular".equals(derivatives);
         boolean understandsLeverage = "false".equals(answers.get("leverage_quiz"));

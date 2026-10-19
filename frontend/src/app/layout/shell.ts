@@ -1,9 +1,11 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { IsActiveMatchOptions } from '@angular/router';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { ROLE_LABELS } from '../core/auth/roles';
 import { SessionStore } from '../core/auth/session-store';
 import { LastLoginDialogComponent } from './last-login-dialog';
 import { navItemsFor } from './nav-items';
+import { UnreadStore } from './unread-store';
 
 /** The signed-in layout: side menu, top bar and the routed page. */
 @Component({
@@ -23,10 +25,18 @@ import { navItemsFor } from './nav-items';
             <a
               class="nav-link"
               [routerLink]="item.path"
+              [queryParams]="item.queryParams ?? null"
               routerLinkActive="active"
+              [routerLinkActiveOptions]="exactMatch"
               (click)="menuOpen.set(false)"
-              >{{ item.label }}</a
             >
+              {{ item.label }}
+              @if (item.badge === 'messages' && unread.count() > 0) {
+                <span class="count-badge" [attr.aria-label]="unread.count() + ' unread'">{{
+                  unread.count()
+                }}</span>
+              }
+            </a>
           }
         }
       </nav>
@@ -59,7 +69,19 @@ import { navItemsFor } from './nav-items';
 })
 export class ShellComponent {
   protected readonly session = inject(SessionStore);
+  protected readonly unread = inject(UnreadStore);
   protected readonly menuOpen = signal(false);
+  protected readonly exactMatch: IsActiveMatchOptions = {
+    paths: 'subset',
+    queryParams: 'exact',
+    fragment: 'ignored',
+    matrixParams: 'ignored',
+  };
+
+  constructor() {
+    this.unread.start();
+    inject(DestroyRef).onDestroy(() => this.unread.stop());
+  }
   protected readonly navItems = computed(() => navItemsFor(this.session.primaryRole()));
   protected readonly roleLabel = computed(() => {
     const role = this.session.primaryRole();

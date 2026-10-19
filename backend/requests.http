@@ -131,3 +131,125 @@ Authorization: Bearer {{clientToken}}
 ### Clients can't open the RM book -> 403
 GET {{api}}/api/rm/clients
 Authorization: Bearer {{clientToken}}
+
+### ================================================================ Drop B
+### Sign in as the administrator (compliance) for the approval requests below
+# @name admin
+POST {{keycloak}}
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=password&client_id=wealth-api-tests&username=admin1&password=Admin%232026x
+
+###
+@adminToken = {{admin.response.body.access_token}}
+
+### ---------------------------------------------------------------- orders
+### Preview: costs and pre-trade checks, nothing saved
+POST {{api}}/api/orders/preview
+Authorization: Bearer {{rmToken}}
+Content-Type: application/json
+
+{ "portfolioId": 1, "instrumentId": 2, "side": "BUY", "quantity": 20,
+  "limitType": "MARKET", "timeInForce": "DAY" }
+
+### Place it (fills at the demo price straight away)
+POST {{api}}/api/orders
+Authorization: Bearer {{rmToken}}
+Content-Type: application/json
+
+{ "portfolioId": 1, "instrumentId": 2, "side": "BUY", "quantity": 20,
+  "limitType": "MARKET", "timeInForce": "DAY" }
+
+### Derivative on Pieter's portfolio: big ASML call -> concentration warning -> awaits approval
+POST {{api}}/api/orders
+Authorization: Bearer {{rmToken}}
+Content-Type: application/json
+
+{ "portfolioId": 7, "instrumentId": 18, "side": "BUY", "quantity": 30,
+  "limitType": "LIMIT", "limitPrice": 19.00, "timeInForce": "GTC" }
+
+### Discretionary portfolio -> blocked (400)
+POST {{api}}/api/orders/preview
+Authorization: Bearer {{rmToken}}
+Content-Type: application/json
+
+{ "portfolioId": 3, "instrumentId": 1, "side": "BUY", "quantity": 1,
+  "limitType": "MARKET", "timeInForce": "DAY" }
+
+### Blotter
+GET {{api}}/api/orders
+Authorization: Bearer {{rmToken}}
+
+### Compliance: orders awaiting approval
+GET {{api}}/api/orders?status=PENDING_APPROVAL
+Authorization: Bearer {{adminToken}}
+
+### Approve order 6 (from the demo data)
+POST {{api}}/api/admin/orders/6/approve
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "note": "Concentration accepted for this client" }
+
+### ---------------------------------------------------------------- proposals
+GET {{api}}/api/proposals
+Authorization: Bearer {{rmToken}}
+
+### Proposal 1 (draft) with live checks per line
+GET {{api}}/api/proposals/1
+Authorization: Bearer {{rmToken}}
+
+### Send it to Clara
+POST {{api}}/api/rm/proposals/1/send
+Authorization: Bearer {{rmToken}}
+
+### Clara accepts and signs (as the client)
+POST {{api}}/api/proposals/1/validate
+Authorization: Bearer {{clientToken}}
+Content-Type: application/json
+
+{ "signature": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=" }
+
+### RM places its orders
+POST {{api}}/api/rm/proposals/1/execute
+Authorization: Bearer {{rmToken}}
+
+### Create a new one
+POST {{api}}/api/rm/proposals
+Authorization: Bearer {{rmToken}}
+Content-Type: application/json
+
+{ "portfolioId": 8, "title": "Build a core equity position",
+  "rationale": "Add a diversified world ETF to Elena's first investments.",
+  "lines": [ { "instrumentId": 11, "side": "BUY", "quantity": 20, "comment": "All-world ETF" } ] }
+
+### ---------------------------------------------------------------- reports
+### Request a statement (returns PENDING; ready a second later)
+POST {{api}}/api/portfolios/1/reports
+Authorization: Bearer {{rmToken}}
+Content-Type: application/json
+
+{ "type": "STATEMENT" }
+
+###
+GET {{api}}/api/portfolios/1/reports
+Authorization: Bearer {{rmToken}}
+
+### ---------------------------------------------------------------- messages
+GET {{api}}/api/messages/threads
+Authorization: Bearer {{rmToken}}
+
+###
+GET {{api}}/api/messages/threads/1
+Authorization: Bearer {{clientToken}}
+
+###
+POST {{api}}/api/messages/threads/1
+Authorization: Bearer {{clientToken}}
+Content-Type: application/json
+
+{ "body": "Thanks Ravi, see you Thursday." }
+
+###
+GET {{api}}/api/messages/unread-count
+Authorization: Bearer {{rmToken}}
