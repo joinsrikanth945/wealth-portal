@@ -9,6 +9,18 @@ variable "location" {
   default     = "germanywestcentral"
 }
 
+variable "apps_location" {
+  description = "Region for the Container Apps (empty = same as location). Use when location has no Container Apps capacity, e.g. northeurope or swedencentral."
+  type        = string
+  default     = ""
+}
+
+variable "db_location" {
+  description = "Region for PostgreSQL (empty = same as location). Use when location doesn't offer PostgreSQL to your subscription (error: The value of the 'Version' should be in:[])."
+  type        = string
+  default     = ""
+}
+
 variable "prefix" {
   description = "Short name used in every resource name."
   type        = string

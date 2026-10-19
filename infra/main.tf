@@ -58,7 +58,8 @@ resource "azurerm_resource_group" "rg" {
 resource "azurerm_postgresql_flexible_server" "db" {
   name                = "${var.prefix}-pg-${random_string.suffix.result}"
   resource_group_name = azurerm_resource_group.rg.name
-  location            = azurerm_resource_group.rg.location
+  # May differ from the resource group's region when PostgreSQL is not offered there.
+  location            = coalesce(var.db_location, azurerm_resource_group.rg.location)
   version             = var.postgres_version
 
   # Free-account offer: Burstable B1ms, 32 GB storage.
@@ -122,7 +123,8 @@ resource "azurerm_postgresql_flexible_server_database" "keycloak" {
 # `az containerapp logs show`.
 resource "azurerm_container_app_environment" "env" {
   name                = "${var.prefix}-env"
-  location            = azurerm_resource_group.rg.location
+  # May differ from the resource group's region when that region has no Container Apps capacity.
+  location            = coalesce(var.apps_location, azurerm_resource_group.rg.location)
   resource_group_name = azurerm_resource_group.rg.name
   tags                = local.tags
 }
