@@ -420,7 +420,7 @@ resource "azuread_application_federated_identity_credential" "github_main" {
   display_name   = "github-main"
   audiences      = ["api://AzureADTokenExchange"]
   issuer         = "https://token.actions.githubusercontent.com"
-  subject        = "repo:${var.github_repo}:ref:refs/heads/main"
+  subject        = "repo:joinsrikanth945@237320265/wealth-portal@1425731026:ref:refs/heads/main"
 }
 
 # The workflow may change resources in this resource group only.
