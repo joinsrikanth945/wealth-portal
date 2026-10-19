@@ -1,27 +1,51 @@
+# Dependency update pull requests: one grouped PR per area per month.
+# Major versions that need code changes (Angular, TypeScript, Spring Boot,
+# Java, Node) are ignored here; we upgrade those deliberately.
 version: 2
 updates:
   - package-ecosystem: maven
     directory: /backend
     schedule:
-      interval: weekly
+      interval: monthly
     groups:
-      spring:
-        patterns: ["org.springframework*"]
+      backend:
+        patterns: ["*"]
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: npm
     directory: /frontend
     schedule:
-      interval: weekly
+      interval: monthly
     groups:
-      angular:
-        patterns: ["@angular/*", "@angular-devkit/*"]
+      frontend:
+        patterns: ["*"]
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: docker
-    directories: ["/backend", "/frontend"]
+    directories: ["/backend", "/frontend", "/keycloak"]
     schedule:
-      interval: weekly
+      interval: monthly
+    groups:
+      docker-images:
+        patterns: ["*"]
+    ignore:
+      # Java and Node stay on their LTS lines (25 and 24) until we move on purpose.
+      - dependency-name: "maven"
+      - dependency-name: "eclipse-temurin"
+      - dependency-name: "node"
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: weekly
+      interval: monthly
+    groups:
+      github-actions:
+        patterns: ["*"]
