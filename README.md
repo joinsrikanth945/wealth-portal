@@ -6,8 +6,12 @@ suitability profiling, portfolios, security and derivative orders with
 pre-trade checks, investment proposals with e-signature, PDF statements and
 secure messaging.
 
-**Stack:** Angular 22 · Spring Boot 4.1 (Java 25) · PostgreSQL 17 · Keycloak 26 ·
-Docker · GitHub Actions
+**Stack:** Angular 22 · Spring Boot 4.1 (Java 25) · PostgreSQL · Keycloak 26 ·
+Docker · GitHub Actions · Terraform · Azure Container Apps
+
+**Status:** runs locally with one command, and is deployed to **Azure (North
+Europe, free tier)**. Every push to `main` that passes CI is deployed
+automatically.
 
 > Demo project. All prices are sample values, not market data.
 
@@ -33,7 +37,7 @@ messaging, audit and architecture.
 11. [How sign-in and security work](#11-how-sign-in-and-security-work)
 12. [Roadmap](#12-roadmap)
 13. [Troubleshooting](#13-troubleshooting)
-14. [Deploy to Azure (free tier)](#14-deploy-to-azure-free-tier)
+14. [Azure deployment (free tier)](#14-azure-deployment-free-tier)
 
 ---
 
@@ -367,29 +371,83 @@ route binding, lazy routes with functional guards and interceptors.
 
 ---
 
-## 14. Deploy to Azure (free tier)
+## 14. Azure deployment (free tier)
 
-The `infra/` folder is Terraform code that creates the cloud version in your
-Azure subscription, sized for the free tier:
+The cloud version runs in Azure **North Europe** and is created by the
+Terraform code in [`infra/`](infra/README.md). It stays within Azure's free
+allowances.
 
-| Azure resource | Purpose |
-|---|---|
-| Container App `wealth-web` | Angular + Nginx, the public HTTPS address |
-| Container App `wealth-api` | Spring Boot, internal only |
-| Container App `wealth-iam` | Keycloak sign-in |
-| PostgreSQL Flexible Server (B1ms) | Databases `wealth` and `keycloak` |
-| Entra app + role | GitHub Actions deploys with OIDC, no stored password |
+### What runs where
 
-Images are published to GitHub Container Registry by the **Release** workflow
-after CI passes on `main`, then rolled out to Azure.
+```mermaid
+flowchart LR
+    U["Browser"] -->|HTTPS| WEB
+    subgraph ENV["Container Apps environment wealth-env · North Europe"]
+        WEB["wealth-web<br/>Angular + Nginx<br/>public"]
+        API["wealth-api<br/>Spring Boot<br/>internal only"]
+        IAM["wealth-iam<br/>Keycloak<br/>public"]
+        WEB -- "/api" --> API
+    end
+    U -->|sign in| IAM
+    API -. "token keys" .-> IAM
+    API --> DB[("PostgreSQL B1ms<br/>wealth + keycloak<br/>North Europe")]
+    IAM --> DB
+```
+
+| Azure resource | Name | Size | Cost |
+|---|---|---|---|
+| Resource group | `rg-wealth-portal` | — | Free |
+| Container Apps environment | `wealth-env` | Consumption, no log workspace | Free |
+| Container App (web) | `wealth-web` | 0.25 vCPU / 0.5 GiB, scale 0–1 | Monthly free grant |
+| Container App (API) | `wealth-api` | 0.5 vCPU / 1 GiB, scale 0–1, internal | Monthly free grant |
+| Container App (Keycloak) | `wealth-iam` | 0.5 vCPU / 1 GiB, scale 0–1 | Monthly free grant |
+| PostgreSQL Flexible Server | `wealth-pg-xxxxx` | Burstable B1ms, 32 GB, v16 | Free 12 months (free account) |
+| Entra app + Contributor on the resource group | `wealth-github-deploy` | — | Free |
+
+Images are stored in **GitHub Container Registry** (public packages, free).
+The apps scale to zero about 5 minutes after the last request, so the
+Container Apps free grant (180,000 vCPU-seconds, 360,000 GiB-seconds and
+2 million requests per month) covers roughly 40 hours of active use. The first
+visit after a quiet period takes 30–90 seconds.
+
+### How a change reaches Azure
+
+```mermaid
+flowchart LR
+    P["git push main"] --> CI["CI<br/>tests + builds"]
+    CI -->|green| R["Release<br/>3 images to GHCR"]
+    R --> D["Deploy<br/>OIDC sign-in to Azure<br/>az containerapp update"]
+    D --> LIVE["Live in ~10–15 min"]
+```
+
+The deploy job signs in to Azure with **OpenID Connect**: GitHub issues a
+short-lived token and Azure trusts it for this repository's `main` branch only,
+so no Azure password is stored in GitHub. It needs four repository
+**variables** (Settings > Secrets and variables > Actions > Variables):
+`AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`,
+`AZURE_RESOURCE_GROUP` (values from `terraform output github_variables`).
+
+Check which commit Azure runs:
+
+```powershell
+az containerapp show -g rg-wealth-portal -n wealth-web --query "properties.template.containers[0].image" -o tsv
+```
+
+### Create or remove the environment
 
 ```powershell
 cd infra
-Copy-Item terraform.tfvars.example terraform.tfvars
+Copy-Item terraform.tfvars.example terraform.tfvars   # first time only
 terraform init
-terraform apply
+terraform plan -out tfplan
+terraform apply tfplan
 terraform output web_url
 ```
 
-Step-by-step guide, costs and troubleshooting: [infra/README.md](infra/README.md).
+`terraform destroy` removes every resource. Full guide, costs, everyday
+commands and the problems we hit on the way (region capacity, PostgreSQL
+availability, OIDC subject format): [infra/README.md](infra/README.md).
 
+> **Before sharing the cloud link:** the demo users' passwords are published in
+> this README. Change them in the Keycloak admin console and delete the
+> `wealth-api-tests` client first (see [infra/README.md](infra/README.md#before-sharing-the-link)).

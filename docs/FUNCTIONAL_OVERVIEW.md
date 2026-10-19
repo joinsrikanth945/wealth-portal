@@ -239,7 +239,7 @@ page numbers and generation date; file name `<type>-<portfolio number>-<date>.pd
 
 How it works: the request is stored as *pending*, a background worker builds the
 PDF (Apache PDFBox) and marks it *ready* (or *failed* with a reason), and the
-screen polls every 1.5 seconds. For the cloud version, PDFs are planned to move to
+screen polls every 1.5 seconds. Next step for the cloud version: move PDFs to
 Azure Blob Storage with time-limited download links.
 
 ## 9. Secure messaging and audit trail
@@ -307,7 +307,7 @@ flowchart TB
 | Channel gateway | Angular dev server locally (port 4200); Nginx in the container image |
 | Wealth API | Spring Boot 4.1, Java 25 (virtual threads), Spring Security resource server, OpenAPI / Swagger, Apache PDFBox (port 8090) |
 | Wealth database | PostgreSQL 17, schema managed by Flyway migrations, demo data loaded separately |
-| Delivery | Docker / Docker Compose locally; GitHub Actions CI (build, tests, CodeQL); Azure Container Apps planned |
+| Delivery | Docker Compose locally; GitHub Actions CI (build, tests, CodeQL) and Release (images to GHCR, deploy to Azure Container Apps via OIDC); infrastructure as code with Terraform |
 
 ## 11. Demo walkthrough and roadmap
 
@@ -326,7 +326,7 @@ the demo users.
 
 | Phase | Content |
 |---|---|
-| Cloud (next) | Azure deployment: Container Apps, PostgreSQL Flexible Server, Key Vault, GitHub Actions with OIDC; two-factor sign-in back on |
+| Cloud | ✅ Deployed: Azure Container Apps + PostgreSQL (North Europe, free tier) via Terraform, automatic deploys from GitHub Actions with OIDC. Next: Key Vault, custom domain, two-factor sign-in back on |
 | Admin | Questionnaire versions editor, user and RM assignment, instrument maintenance |
 | Real-time | Server-sent events for report and order updates instead of polling |
 | Documents | Reports in Blob Storage; scheduled quarterly statements |

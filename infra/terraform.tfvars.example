@@ -1,6 +1,10 @@
 # Copy to terraform.tfvars (not committed) and adjust.
 subscription_id = "bb04ef8e-44b7-4633-85b6-ad8dc08c37e1"
 location        = "germanywestcentral"
+# Container Apps region if location has no capacity (AKSCapacityHeavyUsage)
+apps_location   = "northeurope"
+# PostgreSQL region if location doesn't offer it ("Version should be in:[]")
+db_location     = "northeurope"
 github_repo     = "joinsrikanth945/wealth-portal"
 load_demo_data  = true
 
