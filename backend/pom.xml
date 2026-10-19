@@ -20,7 +20,7 @@
   <properties>
     <java.version>25</java.version>
     <springdoc.version>3.1.1</springdoc.version>
-    <pdfbox.version>3.0.3</pdfbox.version>
+    <pdfbox.version>3.0.8</pdfbox.version>
   </properties>
 
   <dependencies>
