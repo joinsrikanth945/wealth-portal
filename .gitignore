@@ -19,3 +19,10 @@ Thumbs.db
 !.vscode/extensions.json
 !.vscode/launch.json
 !.vscode/settings.json
+
+# Terraform (state and tfvars contain secrets; the lock file IS committed)
+infra/.terraform/
+infra/*.tfstate
+infra/*.tfstate.*
+infra/terraform.tfvars
+infra/*.tfplan

@@ -1,0 +1,12 @@
+# Copy to terraform.tfvars (not committed) and adjust.
+subscription_id = "bb04ef8e-44b7-4633-85b6-ad8dc08c37e1"
+location        = "germanywestcentral"
+github_repo     = "joinsrikanth945/wealth-portal"
+load_demo_data  = true
+
+# Only if your GHCR packages are private:
+# ghcr_username = "joinsrikanth945"
+# ghcr_token    = "ghp_..."
+
+# Optional: your public IP to reach the database from your PC
+# my_ip = "203.0.113.10"

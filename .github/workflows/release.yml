@@ -1,0 +1,99 @@
+name: Release
+
+# After CI passes on main: build the three images, push them to GitHub
+# Container Registry (free), then roll them out to Azure Container Apps.
+# The Azure step signs in with OIDC (no password stored in GitHub) and runs
+# only once the repository variables from `terraform output github_variables`
+# have been added.
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+jobs:
+  images:
+    name: Push image ${{ matrix.name }}
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: wealth-backend
+            context: backend
+          - name: wealth-frontend
+            context: frontend
+          - name: wealth-keycloak
+            context: keycloak
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.SHA }}
+
+      - name: Lower-case owner (image names must be lower case)
+        id: owner
+        run: echo "lc=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          push: true
+          tags: |
+            ghcr.io/${{ steps.owner.outputs.lc }}/${{ matrix.name }}:${{ env.SHA }}
+            ghcr.io/${{ steps.owner.outputs.lc }}/${{ matrix.name }}:latest
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ env.SHA }}
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
+
+  deploy:
+    name: Deploy to Azure Container Apps
+    needs: images
+    if: vars.AZURE_CLIENT_ID != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Roll out the new images
+        env:
+          RG: ${{ vars.AZURE_RESOURCE_GROUP }}
+        run: |
+          set -euo pipefail
+          az extension add --name containerapp --upgrade --yes --only-show-errors
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          for pair in "wealth-iam:wealth-keycloak" "wealth-api:wealth-backend" "wealth-web:wealth-frontend"; do
+            app="${pair%%:*}"
+            image="ghcr.io/${owner}/${pair##*:}:${SHA}"
+            echo "Updating ${app} -> ${image}"
+            az containerapp update --name "$app" --resource-group "$RG" --image "$image" --only-show-errors -o none
+          done
+          url="https://$(az containerapp show --name wealth-web --resource-group "$RG" --query properties.configuration.ingress.fqdn -o tsv)"
+          echo "Deployed: ${url}"
+          echo "### Deployed to Azure: ${url}" >> "$GITHUB_STEP_SUMMARY"

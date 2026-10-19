@@ -33,6 +33,7 @@ messaging, audit and architecture.
 11. [How sign-in and security work](#11-how-sign-in-and-security-work)
 12. [Roadmap](#12-roadmap)
 13. [Troubleshooting](#13-troubleshooting)
+14. [Deploy to Azure (free tier)](#14-deploy-to-azure-free-tier)
 
 ---
 
@@ -343,7 +344,7 @@ route binding, lazy routes with functional guards and interceptors.
 | Admin | User administration with approval, questionnaire editor, instrument master, constraints |
 | Live updates | Order status and messages over Server-Sent Events |
 | Storage | Report PDFs and KYC documents in Azure Blob Storage |
-| Azure | Container Apps, PostgreSQL Flexible Server, Key Vault, deploy workflow with OIDC |
+| Azure | ✅ Done: Container Apps + PostgreSQL via Terraform, GitHub deploy with OIDC (see section 14). Next: Key Vault, custom domain |
 | Hardening | Two-factor back on, Testcontainers integration tests, end-to-end tests |
 
 ---
@@ -363,3 +364,32 @@ route binding, lazy routes with functional guards and interceptors.
 | Port 5432 already in use | A local PostgreSQL is running: stop it, or change the left side of `"5432:5432"` and `DB_URL` |
 | `mvn` says *No plugin found for prefix 'spring-boot'* | Run it inside the `backend` folder |
 | Git warns *LF will be replaced by CRLF* | Harmless; `.gitattributes` keeps line endings consistent |
+
+---
+
+## 14. Deploy to Azure (free tier)
+
+The `infra/` folder is Terraform code that creates the cloud version in your
+Azure subscription, sized for the free tier:
+
+| Azure resource | Purpose |
+|---|---|
+| Container App `wealth-web` | Angular + Nginx, the public HTTPS address |
+| Container App `wealth-api` | Spring Boot, internal only |
+| Container App `wealth-iam` | Keycloak sign-in |
+| PostgreSQL Flexible Server (B1ms) | Databases `wealth` and `keycloak` |
+| Entra app + role | GitHub Actions deploys with OIDC, no stored password |
+
+Images are published to GitHub Container Registry by the **Release** workflow
+after CI passes on `main`, then rolled out to Azure.
+
+```powershell
+cd infra
+Copy-Item terraform.tfvars.example terraform.tfvars
+terraform init
+terraform apply
+terraform output web_url
+```
+
+Step-by-step guide, costs and troubleshooting: [infra/README.md](infra/README.md).
+

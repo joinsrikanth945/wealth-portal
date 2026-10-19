@@ -66,3 +66,10 @@ jobs:
           push: false
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,mode=max,scope=frontend
+      - name: Build Keycloak image
+        uses: docker/build-push-action@v6
+        with:
+          context: keycloak
+          push: false
+          cache-from: type=gha,scope=keycloak
+          cache-to: type=gha,mode=max,scope=keycloak

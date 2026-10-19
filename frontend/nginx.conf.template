@@ -1,5 +1,11 @@
 # Serves the Angular app and forwards /api to Spring Boot, so the browser
 # sees one origin and there are no CORS problems.
+#
+# This is a template: at container start the official Nginx image replaces
+# ${API_UPSTREAM} with the environment variable of that name
+#   - Docker Compose: http://backend:8080 (the Dockerfile default)
+#   - Azure Container Apps: http://wealth-api (internal app name)
+# Nginx's own $variables are left alone because they are not environment variables.
 server {
     listen 80;
     server_name _;
@@ -10,13 +16,16 @@ server {
     add_header Referrer-Policy strict-origin-when-cross-origin always;
 
     location /api/ {
-        proxy_pass http://backend:8080;
-        proxy_set_header Host $host;
+        proxy_pass ${API_UPSTREAM};
+        # Host must be the backend's own name: Azure Container Apps routes by Host.
+        proxy_set_header Host $proxy_host;
+        proxy_set_header X-Forwarded-Host $host;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_http_version 1.1;
         proxy_buffering off;          # lets Server-Sent Events stream
         proxy_read_timeout 1h;
+        proxy_connect_timeout 120s;   # the API may be waking up from scale-to-zero
     }
 
     # Runtime config must never be cached, so a redeploy takes effect at once.

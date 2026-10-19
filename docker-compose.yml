@@ -35,6 +35,8 @@ services:
       KC_HOSTNAME: http://localhost:8180
       # Lets the backend container reach Keycloak at keycloak:8080 internally.
       KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+      # Filled into the WEB_URL placeholder of the realm file (on Azure: the public web address).
+      WEB_URL: http://localhost:8081
     ports:
       - "8180:8080"
     volumes:
