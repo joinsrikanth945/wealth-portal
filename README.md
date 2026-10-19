@@ -11,6 +11,11 @@ Docker · GitHub Actions
 
 > Demo project. All prices are sample values, not market data.
 
+📘 **[Functional overview](docs/FUNCTIONAL_OVERVIEW.md)** — the full description
+in wealth terms: actors and entitlements, data model, MiFID II suitability,
+order management and pre-trade checks, advisory proposals, client reporting,
+messaging, audit and architecture.
+
 ---
 
 ## Contents
@@ -46,6 +51,31 @@ Docker · GitHub Actions
 
 Every feature is a Spring Boot REST API first; the Angular screens call those
 APIs. All of them can be tried in Swagger UI.
+
+### Architecture at a glance
+
+```mermaid
+flowchart TB
+    subgraph CH["Digital channels — one Angular app"]
+        CP["Client portal"]
+        RW["RM workplace"]
+    end
+    IAM["Identity & access<br/>Keycloak :8180"]
+    GW["Channel gateway<br/>dev server :4200 / Nginx"]
+    subgraph API["Wealth API — Spring Boot :8090"]
+        SEC["Security: token → role → book ownership"]
+        MODS["Suitability · Portfolios · Order management · Advisory<br/>Client reporting · Secure messaging · Audit · Reference data"]
+        SEC --> MODS
+    end
+    DB[("Wealth database<br/>PostgreSQL :5432")]
+    CH -- "sign in" --> IAM
+    CH -- "/api + token" --> GW --> SEC
+    API -. "checks token signature" .-> IAM
+    API -- "JPA / SQL" --> DB
+```
+
+The request flow, business rules per module and the full domain model are in
+the [functional overview](docs/FUNCTIONAL_OVERVIEW.md#10-technical-architecture-and-request-flow).
 
 ---
 
