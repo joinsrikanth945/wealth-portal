@@ -1,0 +1,10 @@
+{
+  "recommendations": [
+    "angular.ng-template",
+    "vscjava.vscode-java-pack",
+    "vmware.vscode-boot-dev-pack",
+    "ms-azuretools.vscode-containers",
+    "esbenp.prettier-vscode",
+    "humao.rest-client"
+  ]
+}

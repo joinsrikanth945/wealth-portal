@@ -1,0 +1,14 @@
+import { Injectable, inject } from '@angular/core';
+import { Title } from '@angular/platform-browser';
+import { RouterStateSnapshot, TitleStrategy } from '@angular/router';
+
+/** Page titles read "Home · [Your Bank] Wealth". */
+@Injectable()
+export class AppTitleStrategy extends TitleStrategy {
+  private readonly title = inject(Title);
+
+  override updateTitle(snapshot: RouterStateSnapshot): void {
+    const page = this.buildTitle(snapshot);
+    this.title.setTitle(page ? `${page} · [Your Bank] Wealth` : '[Your Bank] Wealth');
+  }
+}

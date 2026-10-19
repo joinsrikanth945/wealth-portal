@@ -1,0 +1,133 @@
+### =========================================================================
+### Wealth Portal API — try every endpoint from VS Code.
+### Needs the "REST Client" extension (humao.rest-client).
+### Click "Send Request" above any request. Start with the two sign-ins:
+### the other requests reuse their tokens automatically.
+###
+### Prefer a browser? http://localhost:8090/swagger-ui.html
+###   -> Authorize -> sign in as rm1 or client1 -> "Try it out" on any endpoint.
+### =========================================================================
+
+@api = http://localhost:8090
+@keycloak = http://localhost:8180/realms/wealth/protocol/openid-connect/token
+
+### ---------------------------------------------------------------- sign in
+# @name rm
+POST {{keycloak}}
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=password&client_id=wealth-api-tests&username=rm1&password=Manager%232026
+
+###
+# @name client
+POST {{keycloak}}
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=password&client_id=wealth-api-tests&username=client1&password=Client%232026
+
+###
+@rmToken = {{rm.response.body.access_token}}
+@clientToken = {{client.response.body.access_token}}
+
+### ---------------------------------------------------------------- basics
+GET {{api}}/actuator/health
+
+###
+GET {{api}}/api/me
+Authorization: Bearer {{rmToken}}
+
+###
+POST {{api}}/api/session/start
+Authorization: Bearer {{rmToken}}
+
+### ---------------------------------------------------------------- RM book
+GET {{api}}/api/rm/home
+Authorization: Bearer {{rmToken}}
+
+###
+GET {{api}}/api/rm/clients
+Authorization: Bearer {{rmToken}}
+
+###
+GET {{api}}/api/rm/clients?q=dupont
+Authorization: Bearer {{rmToken}}
+
+### Clara Dupont: details, portfolios, MiFID
+GET {{api}}/api/clients/1
+Authorization: Bearer {{rmToken}}
+
+### Noah Weber belongs to rm2 -> 404 for rm1
+GET {{api}}/api/clients/8
+Authorization: Bearer {{rmToken}}
+
+### ---------------------------------------------------------------- portfolios
+GET {{api}}/api/portfolios/1
+Authorization: Bearer {{rmToken}}
+
+### Pieter's portfolio with options and a future
+GET {{api}}/api/portfolios/7
+Authorization: Bearer {{rmToken}}
+
+### ---------------------------------------------------------------- instruments
+GET {{api}}/api/instruments?q=asml
+Authorization: Bearer {{rmToken}}
+
+###
+GET {{api}}/api/instruments?assetClass=OPTION
+Authorization: Bearer {{rmToken}}
+
+### ---------------------------------------------------------------- MiFID
+GET {{api}}/api/mifid/questionnaire
+Authorization: Bearer {{rmToken}}
+
+### Liam O'Connor (client 4) has no profile yet
+GET {{api}}/api/clients/4/mifid
+Authorization: Bearer {{rmToken}}
+
+### Start a review for Liam (returns the open one if it exists)
+# @name review
+POST {{api}}/api/rm/clients/4/mifid/reviews
+Authorization: Bearer {{rmToken}}
+
+###
+@reviewId = {{review.response.body.profile.id}}
+
+### Save all answers (you can also save a few at a time)
+PUT {{api}}/api/rm/mifid/reviews/{{reviewId}}/answers
+Authorization: Bearer {{rmToken}}
+Content-Type: application/json
+
+{
+  "answers": {
+    "goal": "growth", "horizon": "gt10",
+    "income": "50to100", "share": "25to50", "reserve": "3to6m",
+    "drawdown": "hold", "maxloss": "l20",
+    "exp_equities": "some", "exp_derivatives": "none", "leverage_quiz": "false"
+  }
+}
+
+### Finish: client accepts (a tiny placeholder signature image)
+POST {{api}}/api/rm/mifid/reviews/{{reviewId}}/finish
+Authorization: Bearer {{rmToken}}
+Content-Type: application/json
+
+{
+  "decision": "ACCEPTED",
+  "signature": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
+}
+
+### ---------------------------------------------------------------- client self-service
+GET {{api}}/api/client/me
+Authorization: Bearer {{clientToken}}
+
+### Clara's own portfolio
+GET {{api}}/api/portfolios/1
+Authorization: Bearer {{clientToken}}
+
+### Another client's portfolio -> 404
+GET {{api}}/api/portfolios/3
+Authorization: Bearer {{clientToken}}
+
+### Clients can't open the RM book -> 403
+GET {{api}}/api/rm/clients
+Authorization: Bearer {{clientToken}}

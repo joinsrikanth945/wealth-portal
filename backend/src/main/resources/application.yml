@@ -1,0 +1,62 @@
+# Defaults work for local development (backend run from VS Code or `mvn`,
+# infrastructure in Docker). Inside Docker the same keys are overridden by
+# environment variables in docker-compose.yml.
+spring:
+  application:
+    name: wealth-backend
+  threads:
+    virtual:
+      enabled: true
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/wealth}
+    username: ${DB_USER:wealth}
+    password: ${DB_PASSWORD:wealth}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate        # Flyway owns the schema; Hibernate only checks it
+  flyway:
+    enabled: true
+    # db/demo holds the demo clients and portfolios. Production sets
+    # FLYWAY_LOCATIONS=classpath:db/migration so no demo data is loaded.
+    locations: ${FLYWAY_LOCATIONS:classpath:db/migration,classpath:db/demo}
+  mvc:
+    problemdetails:
+      enabled: true             # errors come back as standard RFC 9457 JSON
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # The issuer written in the token (what the browser sees)...
+          issuer-uri: ${KEYCLOAK_ISSUER:http://localhost:8180/realms/wealth}
+          # ...and where to fetch signing keys (may be an internal address).
+          jwk-set-uri: ${KEYCLOAK_JWKS:http://localhost:8180/realms/wealth/protocol/openid-connect/certs}
+          audiences: wealth-api
+
+server:
+  port: ${SERVER_PORT:8090}   # 8090 locally; containers set 8080
+  forward-headers-strategy: framework   # real client IP behind Nginx
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: alpha
+    tags-sorter: alpha
+    persist-authorization: true
+    oauth:
+      client-id: wealth-portal
+      use-pkce-with-authorization-code-grant: true
+
+logging:
+  level:
+    org.springframework.security: INFO

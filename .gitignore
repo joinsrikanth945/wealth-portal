@@ -1,0 +1,21 @@
+# Secrets
+.env
+
+# Backend
+backend/target/
+*.log
+
+# Frontend (frontend/.gitignore covers the rest)
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+
+# Editors and OS
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/settings.json

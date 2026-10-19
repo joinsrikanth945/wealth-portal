@@ -1,0 +1,163 @@
+{
+  "realm": "wealth",
+  "displayName": "[Your Bank] Wealth",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "resetPasswordAllowed": false,
+  "rememberMe": false,
+  "bruteForceProtected": true,
+  "failureFactor": 5,
+  "waitIncrementSeconds": 60,
+  "maxFailureWaitSeconds": 900,
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "otpPolicyType": "totp",
+  "otpPolicyAlgorithm": "HmacSHA1",
+  "otpPolicyDigits": 6,
+  "otpPolicyPeriod": 30,
+  "passwordPolicy": "length(10) and upperCase(1) and lowerCase(1) and digits(1) and specialChars(1) and notUsername",
+  "roles": {
+    "realm": [
+      {
+        "name": "CLIENT",
+        "description": "Bank client: sees own portfolios"
+      },
+      {
+        "name": "RM",
+        "description": "Relationship manager"
+      },
+      {
+        "name": "PM",
+        "description": "Portfolio manager"
+      },
+      {
+        "name": "ADMIN",
+        "description": "Platform administrator"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "wealth-portal",
+      "name": "Wealth portal (Angular)",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "http://localhost:4200/*",
+        "http://localhost:8081/*",
+        "http://localhost:8090/swagger-ui/*"
+      ],
+      "webOrigins": [
+        "http://localhost:4200",
+        "http://localhost:8081",
+        "http://localhost:8090"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:4200/*##http://localhost:8081/*"
+      },
+      "protocolMappers": [
+        {
+          "name": "wealth-api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.custom.audience": "wealth-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "wealth-api-tests",
+      "name": "API tests (local only: password sign-in for requests.http)",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "protocolMappers": [
+        {
+          "name": "wealth-api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.custom.audience": "wealth-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "client1",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Clara",
+      "lastName": "Dupont",
+      "email": "client1@example.com",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Client#2026",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "CLIENT"
+      ],
+      "requiredActions": []
+    },
+    {
+      "username": "rm1",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Ravi",
+      "lastName": "Menon",
+      "email": "rm1@example.com",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Manager#2026",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "RM"
+      ],
+      "requiredActions": []
+    },
+    {
+      "username": "admin1",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Anna",
+      "lastName": "Schmidt",
+      "email": "admin1@example.com",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Admin#2026x",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "ADMIN"
+      ],
+      "requiredActions": []
+    }
+  ]
+}
