@@ -1,5 +1,5 @@
 # Spring Boot 4 API: build with Maven, run on a slim Java 25 runtime.
-FROM maven:3.9-eclipse-temurin-25 AS build
+FROM maven:3.9-eclipse-temurin-26 AS build
 WORKDIR /src
 COPY pom.xml .
 RUN mvn -B -q dependency:go-offline
