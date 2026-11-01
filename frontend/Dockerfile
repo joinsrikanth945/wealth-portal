@@ -6,7 +6,7 @@ RUN npm ci
 COPY . .
 RUN npx ng build --configuration production
 
-FROM nginx:1.29-alpine
+FROM nginx:1.31-alpine
 # Where /api is forwarded; Azure overrides it with http://wealth-api.
 ENV API_UPSTREAM=http://backend:8080
 # The Nginx image turns templates into /etc/nginx/conf.d/*.conf at start-up.
